@@ -4,54 +4,37 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split
 
-# Load the data
 data = pd.read_csv('C:/Users/youse/IGP/simulated_data.csv')
 
-# Feature Engineering
-data['Date'] = pd.to_datetime(data['Date'])  # Convert 'Date' column to datetime
-data['Year'] = data['Date'].dt.year  # Extract year
-data['Month'] = data['Date'].dt.month  # Extract month
-data['Day'] = data['Date'].dt.day  # Extract day
+data['Date'] = pd.to_datetime(data['Date']) 
+data['Year'] = data['Date'].dt.year  
+data['Month'] = data['Date'].dt.month  
+data['Day'] = data['Date'].dt.day 
 
-# Define features and target variable
-X = data[['Year', 'Month', 'Day']].values  # Using date features
+X = data[['Year', 'Month', 'Day']].values 
 y = data['Price'].values
 
-# Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Dictionary to store results for different kernels
 results = {}
-
-# List of kernels to evaluate
 kernels = ['linear', 'poly', 'rbf', 'sigmoid']
 
 for kernel in kernels:
-    # Create SVR model with standardization and specified kernel
     model = make_pipeline(StandardScaler(), SVR(kernel=kernel, C=100, gamma=0.1, epsilon=0.1))
 
-    # Train the model on the training data
     model.fit(X_train, y_train)
-
-    # Predictions on the test data
     predictions_test = model.predict(X_test)
 
-    # Calculate Mean Squared Error (MSE) for the test data
     mse_test = mean_squared_error(y_test, predictions_test)
-
-    # Calculate R-squared score for the test data
     r2_test = r2_score(y_test, predictions_test)
 
-    # Store results in the dictionary
     results[kernel] = {'MSE': mse_test, 'R-squared': r2_test}
 
-# Print results for each kernel
 for kernel, result in results.items():
     print(f"Results for {kernel} kernel:")
     print(f"MSE: {result['MSE']:.2f}, R-squared: {result['R-squared']:.2f}")
     print()
 
-# Plot actual data and predicted close prices for the test data for the best performing kernel
 best_kernel = max(results, key=lambda k: results[k]['R-squared'])
 predictions_test_best_kernel = make_pipeline(StandardScaler(), SVR(kernel=best_kernel, C=100, gamma=0.1, epsilon=0.1)).fit(X_train, y_train).predict(X_test)
 plt.figure(figsize=(12, 6))
