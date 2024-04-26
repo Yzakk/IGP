@@ -1,0 +1,39 @@
+#simulated
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.ar_model import AutoReg
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+
+data = pd.read_csv('C:/Users/youse/IGP/simulated_data.csv')
+
+data['Date'] = pd.to_datetime(data['Date'])
+data = data.sort_values(by='Date')
+
+train_size = int(0.8 * len(data))
+train_data = data.iloc[:train_size]
+test_data = data.iloc[train_size:]
+
+model = AutoReg(train_data['Price'], lags=1)
+model_fit = model.fit()
+
+train_predictions = model_fit.predict(start=1, end=len(train_data), dynamic=False)
+test_predictions = model_fit.predict(start=len(train_data), end=len(data)-1, dynamic=False)
+
+train_mse = mean_squared_error(train_data['Price'], train_predictions)
+test_mse = mean_squared_error(test_data['Price'], test_predictions)
+
+# Plot actual vs. predicted prices for the testing set
+plt.figure(figsize=(10, 6))
+plt.plot(test_data['Date'], test_data['Price'], label='Actual')
+plt.plot(test_data['Date'], test_predictions, label='Predicted', linestyle='--')
+plt.title('Actual vs. Predicted Stock Prices (Testing Set)\nMSE: {:.2f}'.format(test_mse))
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.legend()
+plt.show()
+
+print("Training MSE:", train_mse)
+print("Testing MSE:", test_mse)
