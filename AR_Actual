@@ -1,0 +1,45 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.ar_model import AutoReg
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+
+# Load the dataset
+data = pd.read_csv('C:/Users/youse/IGP/microsoftdata.csv')
+
+# Ensure that the 'Date' column is parsed as datetime
+data['Date'] = pd.to_datetime(data['Date'])
+
+# Sort the dataframe by date
+data = data.sort_values(by='Date')
+
+# Split the data into training, and testing sets
+train_size = int(0.8 * len(data))
+train_data = data.iloc[:train_size]
+test_data = data.iloc[train_size:]
+
+# Fit Auto-Regressive (AR) model
+model = AutoReg(train_data['Close'], lags=1)
+model_fit = model.fit()
+
+# Make predictions for training, validation, and testing sets
+train_predictions = model_fit.predict(start=1, end=len(train_data), dynamic=False)
+test_predictions = model_fit.predict(start=len(train_data), end=len(data)-1, dynamic=False)
+
+# Calculate Mean Squared Error (MSE) for training, validation, and testing sets
+train_mse = mean_squared_error(train_data['Close'], train_predictions)
+test_mse = mean_squared_error(test_data['Close'], test_predictions)
+
+# Plot actual vs. predicted prices for the testing set
+plt.figure(figsize=(10, 6))
+plt.plot(test_data['Date'], test_data['Close'], label='Actual')
+plt.plot(test_data['Date'], test_predictions, label='Predicted', linestyle='--')
+plt.title('Actual vs. Predicted Stock Prices (Testing Set)\nMSE: {:.2f}'.format(test_mse))
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.legend()
+plt.show()
+
+print("Training MSE:", train_mse)
+print("Testing MSE:", test_mse)
